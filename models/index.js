@@ -10,7 +10,7 @@ User.hasMany(Question, { foreignKey: 'userId', as: 'questions' });
 Question.belongsTo(User, { foreignKey: 'userId', as: 'author' });
 
 User.hasMany(Answer, { foreignKey: 'userId', as: 'answers' });
-Answer.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+Answer.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Question.hasMany(Answer, { foreignKey: 'questionId', as: 'answers' });
 Answer.belongsTo(Question, { foreignKey: 'questionId', as: 'question' });

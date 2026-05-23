@@ -36,16 +36,28 @@ exports.getAllQuestions = async (req, res, next) => {
       include,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      attributes: {
+        include: [
+          [sequelize.fn('COUNT', sequelize.col('answers.id')), 'answerCount']
+        ]
+      },
+      subQuery: false,
+      group: ['Question.id']
     });
 
+    const data = questions.rows.map(q => ({
+      ...q.dataValues,
+      answerCount: q.dataValues.answers?.length || 0
+    }));
+
     res.json({
-      data: questions.rows,
+      data,
       pagination: {
-        total: questions.count,
+        total: questions.count.length,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(questions.count / limit)
+        pages: Math.ceil(questions.count.length / limit)
       }
     });
   } catch (error) {
@@ -59,11 +71,11 @@ exports.getQuestionById = async (req, res, next) => {
 
     const question = await Question.findByPk(id, {
       include: [
-        { model: User, as: 'author', attributes: ['id', 'username', 'reputation'] },
+        { model: User, as: 'user', attributes: ['id', 'username', 'reputation'] },
         {
           model: Answer,
           as: 'answers',
-          include: [{ model: User, as: 'author', attributes: ['id', 'username', 'reputation'] }]
+          include: [{ model: User, as: 'user', attributes: ['id', 'username', 'reputation'] }]
         },
         { model: Tag, as: 'tags', attributes: ['id', 'name'] }
       ]
@@ -174,6 +186,49 @@ exports.deleteQuestion = async (req, res, next) => {
     await question.destroy();
 
     res.json({ message: 'Question deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.searchQuestions = async (req, res, next) => {
+  try {
+    const { q, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    if (!q) {
+      return res.status(400).json({ message: 'Search query required' });
+    }
+
+    const questions = await Question.findAndCountAll({
+      where: {
+        [Op.or]: [
+          { title: { [Op.iLike]: `%${q}%` } },
+          { description: { [Op.iLike]: `%${q}%` } }
+        ]
+      },
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'username', 'reputation'] },
+        { model: Answer, as: 'answers', attributes: ['id'] },
+        { model: Tag, as: 'tags', attributes: ['id', 'name'] }
+      ],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      data: questions.rows.map(q => ({
+        ...q.dataValues,
+        answerCount: q.answers?.length || 0
+      })),
+      pagination: {
+        total: questions.count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(questions.count / limit)
+      }
+    });
   } catch (error) {
     next(error);
   }

@@ -12,20 +12,14 @@ exports.getAllTags = async (req, res, next) => {
       order: [['name', 'ASC']]
     });
 
-    res.json({
-      data: tags.rows.map(tag => ({
+    res.json(
+      tags.rows.map(tag => ({
         id: tag.id,
         name: tag.name,
         description: tag.description,
-        questionCount: tag.questions.length
-      })),
-      pagination: {
-        total: tags.count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(tags.count / limit)
-      }
-    });
+        count: tag.questions.length
+      }))
+    );
   } catch (error) {
     next(error);
   }
