@@ -5,16 +5,15 @@ exports.getUserProfile = async (req, res, next) => {
     const { id } = req.params;
 
     const user = await User.findByPk(id, {
-      attributes: { exclude: ['password'] },
-      include: [
-        { model: Question, as: 'questions', attributes: ['id', 'title'] },
-        { model: Answer, as: 'answers', attributes: ['id', 'content'] }
-      ]
+      attributes: { exclude: ['password'] }
     });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    const questionCount = await Question.count({ where: { userId: id } });
+    const answerCount = await Answer.count({ where: { userId: id } });
 
     res.json({
       id: user.id,
@@ -23,8 +22,8 @@ exports.getUserProfile = async (req, res, next) => {
       reputation: user.reputation,
       bio: user.bio,
       avatar: user.avatar,
-      questionCount: user.questions.length,
-      answerCount: user.answers.length,
+      questionCount,
+      answerCount,
       createdAt: user.createdAt
     });
   } catch (error) {

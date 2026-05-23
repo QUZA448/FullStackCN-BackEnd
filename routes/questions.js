@@ -10,6 +10,7 @@ router.post('/', authMiddleware, questionController.createQuestion);
 router.get('/:id', questionController.getQuestionById);
 router.put('/:id', authMiddleware, questionController.updateQuestion);
 router.delete('/:id', authMiddleware, questionController.deleteQuestion);
+router.get('/search', questionController.searchQuestions);
 
 // Answers routes
 router.post('/:questionId/answers', authMiddleware, answerController.createAnswer);

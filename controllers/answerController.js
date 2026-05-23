@@ -22,7 +22,7 @@ exports.createAnswer = async (req, res, next) => {
     });
 
     const fullAnswer = await Answer.findByPk(answer.id, {
-      include: [{ model: User, as: 'author', attributes: ['id', 'username', 'reputation'] }]
+      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'reputation'] }]
     });
 
     res.status(201).json(fullAnswer);
